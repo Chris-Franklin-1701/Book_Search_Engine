@@ -7,6 +7,7 @@ export const CREATE_USER = gql`
             user{
                 _id
                 username
+                email
             }
         }
     }
@@ -19,11 +20,50 @@ export const LOGIN_USER = gql`
             user {
                 _id
                 username
+                email
             }
         }
     }
 `;
 
 export const SAVE_BOOK = gql`
-    mutation saveBook()
-`
+    mutation saveBook($bookData: input!) {
+        saveBook(bookData: $bookData) {
+            token
+            _id
+            username
+            email
+            savebook {
+                bookId
+                title
+                authors
+                description
+                image
+                link
+            }
+        }
+    }
+`;
+
+export const DELETE_BOOK = gql`
+    mutation deleteBook($bookId: String!) {
+        deleteBook(bookId: $bookId) {
+            token
+            _id
+            username
+            email
+            savebook {
+                bookId
+                title
+                authors
+                description
+                image
+                link
+            }
+        }
+    }
+`;
+
+export const searchGoogleBooks = (query) => {
+    return fetch(`https://www.googleapis.com/books/v1/volumes?q=${query}`);
+}

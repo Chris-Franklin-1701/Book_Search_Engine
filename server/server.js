@@ -16,6 +16,7 @@ async function startServer() {
   
   server.applyMiddleware({ app });
 }
+startServer();
 
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());

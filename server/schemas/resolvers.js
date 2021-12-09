@@ -5,14 +5,6 @@ const { signToken } = require('../utils/auth');
 
 const resolvers = {
     Query: {
-        books: async (parent, {username}) => {
-            const params = username ? {username} : {};
-            return Book.find(params).sort({ title: -1 });
-        },
-        user: async (parent, {_id}) => {
-            const params = _id ? {_id} : {};
-            return User.find(params);
-        },
         me: async (parent, args, context) => {
             if (context.user) {
                 return User.findOne({_id: context.user._id});

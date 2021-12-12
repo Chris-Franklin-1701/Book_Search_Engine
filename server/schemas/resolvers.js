@@ -1,21 +1,15 @@
-const { Book, User } = require('../models');
+const { User } = require('../models');
 const { AuthenticationError } = require('apollo-server-express');
 const { signToken } = require('../utils/auth');
 
 
 const resolvers = {
     Query: {
-        books: async (parent, {username}) => {
-            const params = username ? {username} : {};
-            return Book.find(params).sort({ title: -1 });
-        },
-        user: async (parent, {_id}) => {
-            const params = _id ? {_id} : {};
-            return User.find(params);
-        },
         me: async (parent, args, context) => {
             if (context.user) {
-                return User.findOne({_id: context.user._id}).populate('book');
+                const user = User.findOne({_id: context.user._id}).select("-__v -password");
+
+                return user;
             }
             throw new AuthenticationError('You need to be logged in!');
         },
@@ -23,13 +17,36 @@ const resolvers = {
     Mutation: {
         createUser: async (parent, args) => {
             const user = await User.create(args);
-            return user;
+            const token = signToken(user);
+            return { token,user };
         },
-        removeBook: async (parent, { bookId }) => {
-            return Book.findOneAndDelete({_id: bookId});
+        deleteBook: async (parent, { bookId }) => {
+            if (context.user) {
+                const updateUser = await User.findOneAndUpdate(
+                    {_id: context.user._id},
+                    {$pull: {saveBook: {bookId: bookId}}},
+                    {new: true}
+                );
+
+                return updateUser;
+            }
+
+            throw new AuthenticationError('You need to be logged in to do this!')
         },
-        saveBook: async (parent, { bookAuthors, bookDescription, bookImage, bookLink, bookTitle }) => {
-            return Book.create({ bookAuthors, bookDescription, bookImage, bookLink, bookTitle});
+        saveBook: async (parent, { bookData }, context) => {
+            if (context.user) {
+                const updateUser = await User.findOneAndUpdate(
+                    {_id: context.user._id},
+                    {$push: {saveBook: bookData}},
+                    {new: true}
+                );
+            
+            return updateUser;
+            
+            }
+
+            throw new AuthenticationError('You need to be logged it to do this!')
+            
         },
         login: async (parent, {email, password}) => {
             const user = await User.findOne({email});
